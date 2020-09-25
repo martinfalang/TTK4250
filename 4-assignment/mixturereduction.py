@@ -32,7 +32,8 @@ def gaussian_mixture_moments(
     # print("2", mean_diff**2)
     # print("3", mean_diff.T @ mean_diff)    
     
-    cov_ext = np.average(mean_diff**2, axis=0, weights=w)  # TODO: hint, also an average
+    cov_ext = mean_diff.T @ np.diag(w) @ mean_diff
+    # cov_ext = np.average(mean_diff**2, axis=0, weights=w)  # TODO: hint, also an average
 
     # # total covariance
     cov_bar = cov_int + cov_ext  # TODO
