@@ -14,13 +14,13 @@ def discrete_bayes(
     """Swap which discrete variable is the marginal and conditional."""
     
     # joint: p(x,z) = p(z|x)*p(z)
-    joint = cond_pr * pr.reshape((-1, 1)) # TDOO
+    joint = cond_pr * pr.reshape((-1, 1)) 
         
     # marginal: (probability that we are in more s_k given the previous measurements) p(z)
-    marginal = cond_pr.T @ pr # TODO understand this
+    marginal = cond_pr.T @ pr 
     
     # Take care of rare cases of degenerate zero marginal,
-    conditional = joint / marginal # TODO
+    conditional = joint / marginal 
     
     # flip axes?? (n, m) -> (m, n)
     conditional = conditional.T

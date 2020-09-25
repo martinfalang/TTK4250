@@ -80,9 +80,9 @@ ax1.scatter(*Z.T[:2])
 # %% tune single filters
 
 # parameters
-sigma_z = 3
-sigma_a_CV = 0.3
-sigma_a_CT = 0.1
+sigma_z = 2
+sigma_a_CV = 0.5
+sigma_a_CT = 0.5
 sigma_omega = 0.002 * np.pi
 
 # initial values
