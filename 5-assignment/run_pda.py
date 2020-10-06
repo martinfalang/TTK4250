@@ -90,25 +90,25 @@ ax1.set_title("True trajectory and the nearby measurements")
 # I do not think you can run this with inline plotting. '%matplotlib' in the console to make it external
 # Remember that you can exit the figure.
 # comment this out when you are
-fig2, ax2 = plt.subplots(num=2, clear=True)
-sh = ax2.scatter(np.nan, np.nan)
-th = ax2.set_title(f"measurements at step 0")
-ax2.axis([0, 700, -100, 300])
-plotpause = 0.003
-# sets a pause in between time steps if it goes to fast
-for k, Zk in enumerate(Z):
-    sh.set_offsets(Zk)
-    th.set_text(f"measurements at step {k}")
-    fig2.canvas.draw_idle()
-    plt.show(block=False)
-    plt.pause(plotpause)
+# fig2, ax2 = plt.subplots(num=2, clear=True)
+# sh = ax2.scatter(np.nan, np.nan)
+# th = ax2.set_title(f"measurements at step 0")
+# ax2.axis([0, 700, -100, 300])
+# plotpause = 0.003
+# # sets a pause in between time steps if it goes to fast
+# for k, Zk in enumerate(Z):
+#     sh.set_offsets(Zk)
+#     th.set_text(f"measurements at step {k}")
+#     fig2.canvas.draw_idle()
+#     plt.show(block=False)
+#     plt.pause(plotpause)
 # %%
-sigma_a = # TODO
-sigma_z = # TODO
+sigma_a = 4
+sigma_z = 3
 
-PD = # TODO
-clutter_intensity = # TODO
-gate_size = # TODO
+PD = 0.9
+clutter_intensity = 1e-3
+gate_size = 3
 
 dynamic_model = dynamicmodels.WhitenoiseAccelleration(sigma_a)
 measurement_model = measurementmodels.CartesianPosition(sigma_z)
@@ -135,19 +135,24 @@ tracker_update_list = []
 tracker_predict_list = []
 # estimate
 for k, (Zk, x_true_k) in enumerate(zip(Z, Xgt)):
-    tracker_predict = # TODO
-    tracker_update = # TODO
-    NEES[k] = # TODO
-    NEESpos[k] = # TODO
-    NEESvel[k] = # TODO
+    tracker_predict = tracker.predict(tracker_update, Ts)
+    tracker_update = tracker.update(Zk, tracker_predict)
+    NEES[k] = ekf_filter.NEES(tracker_update, x_true_k[0:4])
+        
+    x, P = tracker_update
+    NEESpos[k] = ekf_filter.NEES(GaussParams(x[0:2], P[0:2, 0:2]), \
+                                 x_true_k[0:2])
+    NEESvel[k] = ekf_filter.NEES(GaussParams(x[2:4], P[2:4, 2:4]), \
+                                 x_true_k[2:4])
 
     tracker_predict_list.append(tracker_predict)
     tracker_update_list.append(tracker_update)
 
 x_hat = np.array([upd.mean for upd in tracker_update_list])
 # calculate a performance metric
-posRMSE = # TODO: position RMSE
-velRMSE = # TODO: velocity RMSE
+
+posRMSE = np.sqrt(np.mean((x_hat[0:2] - Xgt[0:2])**2))
+velRMSE = np.sqrt(np.mean((x_hat[2:4] - Xgt[2:4])**2))
 
 # %% plots
 fig3, ax3 = plt.subplots(num=3, clear=True)
@@ -159,9 +164,9 @@ ax3.set_title(
 
 fig4, axs4 = plt.subplots(3, sharex=True, num=4, clear=True)
 
-confprob = # TODO: probability for confidence interval
-CI2 = # TODO: confidence interval for NEESpos and NEESvel
-CI4 = # TODO: confidence interval for NEES
+confprob = 0.9
+CI2 = np.asarray(scipy.stats.chi2.interval(confprob, 2))
+CI4 = CI2 = np.asarray(scipy.stats.chi2.interval(confprob, 4))
 
 axs4[0].plot(np.arange(K) * Ts, NEESpos)
 axs4[0].plot([0, (K - 1) * Ts], np.repeat(CI2[None], 2, 0), "--r")
@@ -181,12 +186,12 @@ axs4[2].set_ylabel("NEES")
 inCI = np.mean((CI2[0] <= NEES) * (NEES <= CI2[1]))
 axs4[2].set_title(f"{inCI*100:.1f}% inside {confprob*100:.1f}% CI")
 
-confprob = # TODO
-CI2K = # TODO: ANEESpos and ANEESvel
-CI4K = # TODO: NEES
-ANEESpos = # TODO
-ANEESvel = # TODO
-ANEES = # TODO
+confprob = 0.9
+CI2K = CI2K = np.asarray(scipy.stats.chi2.interval(confprob, 2*K)) / K
+CI4K = CI2K = np.asarray(scipy.stats.chi2.interval(confprob, 4*K)) / K
+#ANEESpos = # TODO
+#ANEESvel = # TODO
+#ANEES = # TODO
 print(f"ANEESpos = {ANEESpos:.2f} with CI = [{CI2K[0]:.2f}, {CI2K[1]:.2f}]")
 print(f"ANEESvel = {ANEESvel:.2f} with CI = [{CI2K[0]:.2f}, {CI2K[1]:.2f}]")
 print(f"ANEES = {ANEES:.2f} with CI = [{CI4K[0]:.2f}, {CI4K[1]:.2f}]")
