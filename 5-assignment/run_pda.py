@@ -10,6 +10,8 @@ import measurementmodels
 import ekf
 import pda
 
+from gaussparams import GaussParams
+
 # %% plot config check and style setup
 
 # to see your plot config
@@ -151,22 +153,22 @@ for k, (Zk, x_true_k) in enumerate(zip(Z, Xgt)):
 x_hat = np.array([upd.mean for upd in tracker_update_list])
 # calculate a performance metric
 
-posRMSE = np.sqrt(np.mean((x_hat[0:2] - Xgt[0:2])**2))
-velRMSE = np.sqrt(np.mean((x_hat[2:4] - Xgt[2:4])**2))
+posRMSE = np.sqrt(np.mean((x_hat[:, 0:2] - Xgt[:, 0:2])**2))
+velRMSE = np.sqrt(np.mean((x_hat[:, 2:4] - Xgt[:, 2:4])**2))
 
 # %% plots
 fig3, ax3 = plt.subplots(num=3, clear=True)
 ax3.plot(*x_hat.T[:2], label=r"$\hat x$")
 ax3.plot(*Xgt.T[:2], label="$x$")
 ax3.set_title(
-    rf"$\sigma_a = {sigma_a:.3f}$, \sigma_z = {sigma_z:.3f}, posRMSE = {posRMSE:.2f}, velRMSE = {velRMSE:.2f}"
+    rf"$\sigma_a = {sigma_a:.3f}$, $\sigma_z = {sigma_z:.3f}$, posRMSE = {posRMSE:.2f}, velRMSE = {velRMSE:.2f}"
 )
 
 fig4, axs4 = plt.subplots(3, sharex=True, num=4, clear=True)
 
 confprob = 0.9
 CI2 = np.asarray(scipy.stats.chi2.interval(confprob, 2))
-CI4 = CI2 = np.asarray(scipy.stats.chi2.interval(confprob, 4))
+CI4 = np.asarray(scipy.stats.chi2.interval(confprob, 4))
 
 axs4[0].plot(np.arange(K) * Ts, NEESpos)
 axs4[0].plot([0, (K - 1) * Ts], np.repeat(CI2[None], 2, 0), "--r")
@@ -189,9 +191,9 @@ axs4[2].set_title(f"{inCI*100:.1f}% inside {confprob*100:.1f}% CI")
 confprob = 0.9
 CI2K = CI2K = np.asarray(scipy.stats.chi2.interval(confprob, 2*K)) / K
 CI4K = CI2K = np.asarray(scipy.stats.chi2.interval(confprob, 4*K)) / K
-#ANEESpos = # TODO
-#ANEESvel = # TODO
-#ANEES = # TODO
+ANEESpos = np.mean(NEESpos)
+ANEESvel = np.mean(NEESvel)
+ANEES = np.mean(NEES)
 print(f"ANEESpos = {ANEESpos:.2f} with CI = [{CI2K[0]:.2f}, {CI2K[1]:.2f}]")
 print(f"ANEESvel = {ANEESvel:.2f} with CI = [{CI2K[0]:.2f}, {CI2K[1]:.2f}]")
 print(f"ANEES = {ANEES:.2f} with CI = [{CI4K[0]:.2f}, {CI4K[1]:.2f}]")
